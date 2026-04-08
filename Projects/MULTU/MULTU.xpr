@@ -3,10 +3,10 @@
 <!--                                                         -->
 <!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="14" Path="C:/Users/tonhi/Project/Computer-Organization/ExpProj/MULT.xpr">
+<Project Version="7" Minor="14" Path="C:/Users/tonhi/Project/Computer-Organization/Projects/MULTU/MULTU.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
-    <Option Name="Id" Val="408d55e023404890aa3affcce654a76d"/>
+    <Option Name="Id" Val="37c990adbbfd488da2cdd1458147aa71"/>
     <Option Name="Part" Val="xc7a100tcsg324-1"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
@@ -21,8 +21,8 @@
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="EnableCoreContainer" Val="FALSE"/>
     <Option Name="CreateRefXciForCoreContainers" Val="FALSE"/>
-    <Option Name="IPUserFilesDir" Val="$PPRDIR/MULT.ip_user_files"/>
-    <Option Name="IPStaticSourceDir" Val="$PPRDIR/MULT.ip_user_files/ipstatic"/>
+    <Option Name="IPUserFilesDir" Val="$PPRDIR/MULTU.ip_user_files"/>
+    <Option Name="IPStaticSourceDir" Val="$PPRDIR/MULTU.ip_user_files/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="WTXSimLaunchSim" Val="0"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
