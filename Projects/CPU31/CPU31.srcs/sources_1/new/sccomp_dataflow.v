@@ -21,6 +21,17 @@
 
 
 module sccomp_dataflow(
-
+    input clk_in,
+    input reset,
+    input [31:0] inst,
+    output [31:0] pc
+);
+    // dmem、imem
+    cpu sccpu(
+        .clk_in(clk_in),
+        .reset(reset),
+        .inst(inst),
+        .pc(pc)
     );
+
 endmodule
