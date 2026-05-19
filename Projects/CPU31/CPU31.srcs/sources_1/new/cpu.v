@@ -7,7 +7,7 @@ module cpu(
     input [31:0] inst
 );
 
-    // â”€â”€ PC register â”€â”€
+    // â”?â”? PC register â”?â”?
     wire [31:0] pc_next;
     pcreg pc_reg (
         .clk(clk_in),
@@ -17,7 +17,7 @@ module cpu(
         .data_out(pc)
     );
 
-    // â”€â”€ Decoder â”€â”€
+    // â”?â”? Decoder â”?â”?
     wire        is_R_type, is_I_type, is_J_type;
     wire [5:0]  op;
     wire [4:0]  rs, rt, rd, shamt;
@@ -58,12 +58,12 @@ module cpu(
         .jump_reg(jump_reg)
     );
 
-    // â”€â”€ Register file â”€â”€
+    // â”?â”? Register file â”?â”?
     wire [31:0] rdata1, rdata2;
     wire [4:0]  waddr;
     wire [31:0] wdata;
 
-    regfiles cpu_rf (
+    regfiles cpu_ref (
         .clk(clk_in),
         .rst(reset),
         .we(reg_write),
@@ -75,7 +75,7 @@ module cpu(
         .rdata2(rdata2)
     );
 
-    // â”€â”€ ALU â”€â”€
+    // â”?â”? ALU â”?â”?
     wire [31:0] alu_a, alu_b;
     wire [31:0] alu_r;
     wire        alu_zero, alu_carry, alu_negative, alu_overflow;
@@ -91,13 +91,13 @@ module cpu(
         .overflow(alu_overflow)
     );
 
-    // â”€â”€ Immediate extension â”€â”€
+    // â”?â”? Immediate extension â”?â”?
     wire [31:0] imm_ext;
     assign imm_ext = ((op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110))
         ? {16'b0, immediate}
         : {{16{immediate[15]}}, immediate};
 
-    // â”€â”€ Data memory â”€â”€
+    // â”?â”? Data memory â”?â”?
     reg [31:0] dmem [0:255];
     wire [31:0] mem_rdata;
     assign mem_rdata = dmem[alu_r[9:2]];
@@ -107,16 +107,16 @@ module cpu(
             dmem[alu_r[9:2]] <= rdata2;
     end
 
-    // â”€â”€ ALU input muxes â”€â”€
+    // â”?â”? ALU input muxes â”?â”?
     assign alu_a = alu_src_a ? {27'b0, shamt} : rdata1;
     assign alu_b = alu_src_b ? imm_ext : rdata2;
 
-    // â”€â”€ Writeback muxes â”€â”€
+    // â”?â”? Writeback muxes â”?â”?
     wire [31:0] pc_plus_4 = pc + 32'd4;
     assign waddr = link ? 5'd31 : (is_R_type ? rd : rt);
     assign wdata = link ? pc_plus_4 : (mem_to_reg ? mem_rdata : alu_r);
 
-    // â”€â”€ Next PC logic â”€â”€
+    // â”?â”? Next PC logic â”?â”?
     wire [31:0] branch_offset = {{14{immediate[15]}}, immediate, 2'b00};
     wire [31:0] branch_target = pc_plus_4 + branch_offset;
     wire [31:0] jump_target = {pc_plus_4[31:28], index, 2'b00};

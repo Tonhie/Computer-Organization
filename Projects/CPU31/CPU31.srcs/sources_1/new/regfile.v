@@ -29,26 +29,26 @@ module regfiles(
     output [31:0] rdata1,
     output [31:0] rdata2
 );
-    wire [31:0] reg_out [0:31]; 
+    wire [31:0] array_reg [0:31]; 
 
     genvar i;
     generate
         for (i = 0; i < 32; i = i + 1) begin : reg_gen
             if (i == 0) begin
-                assign reg_out[0] = 32'h0;
+                assign array_reg[0] = 32'h0;
             end else begin
                 pcreg reg_inst (
                     .clk(clk),
                     .rst(rst),
                     .ena(we && (waddr == i)), 
                     .data_in(wdata),
-                    .data_out(reg_out[i])
+                    .data_out(array_reg[i])
                 );
             end
         end
     endgenerate
 
-    assign rdata1 = reg_out[raddr1];
-    assign rdata2 = reg_out[raddr2];
+    assign rdata1 = array_reg[raddr1];
+    assign rdata2 = array_reg[raddr2];
 
 endmodule

@@ -33,5 +33,13 @@ module sccomp_dataflow(
         .inst(inst),
         .pc(pc)
     );
-
+	
+	imem rom (
+		
+	);
+	
+	dmem ram (
+	
+	);
+	
 endmodule
