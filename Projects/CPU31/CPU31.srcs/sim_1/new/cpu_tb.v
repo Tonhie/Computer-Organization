@@ -11,37 +11,32 @@ module _246tb_ex9_tb;
 	wire [31:0] pc;
 	// Instantiate the Unit Under Test (UUT)
 	sccomp_dataflow uut (
-		.clk_in(clk_in), 
-		.reset(reset), 
+		.clk_in(clk_in),
+		.reset(reset),
 		.inst(inst),
 		.pc(pc)
 	);
 
 	integer file_output;
-	
+
 	initial begin
-		$readmemh("addi", ram);
-	end
-	
-	initial begin
-		
-		file_output = $fopen("_246tb_ex9_result.txt");	
+		file_output = $fopen("_246tb_ex9_result.txt");
 		// Initialize Inputs
 		clk_in = 0;
 		reset = 1;
 		// Wait 100 ns for global reset to finish
 		#50;
-        reset = 0;		
-		// Add stimulus here	
+        reset = 0;
+		// Add stimulus here
 		//#100;
 		//$fclose(file_output);
 	end
-   
-	always begin		
-	#50;	
+
+	always begin
+	#50;
 	clk_in = ~clk_in;
-	if(clk_in == 1'b1) begin	
-			$fdisplay(file_output, "pc: %h", pc);	
+	if(clk_in == 1'b1) begin
+			$fdisplay(file_output, "pc: %h", pc);
 			$fdisplay(file_output, "instr: %h", inst);
 			$fdisplay(file_output, "regfile0: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
 			$fdisplay(file_output, "regfile1: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[1]);

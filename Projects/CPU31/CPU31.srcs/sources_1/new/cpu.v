@@ -4,10 +4,14 @@ module cpu(
     input clk_in,
     input reset,
     output [31:0] pc,
-    input [31:0] inst
+    input [31:0] inst,
+    output [31:0] mem_addr,
+    output [31:0] mem_wdata,
+    output mem_write,
+    input [31:0] mem_rdata
 );
 
-    // â”?â”? PC register â”?â”?
+    // ï¿½?ï¿½? PC register ï¿½?ï¿½?
     wire [31:0] pc_next;
     pcreg pc_reg (
         .clk(clk_in),
@@ -17,7 +21,7 @@ module cpu(
         .data_out(pc)
     );
 
-    // â”?â”? Decoder â”?â”?
+    // ï¿½?ï¿½? Decoder ï¿½?ï¿½?
     wire        is_R_type, is_I_type, is_J_type;
     wire [5:0]  op;
     wire [4:0]  rs, rt, rd, shamt;
@@ -27,7 +31,7 @@ module cpu(
     wire        is_signed;
     wire        need_jump;
     wire [25:0] index;
-    wire        reg_write, mem_to_reg, mem_write;
+    wire        reg_write, mem_to_reg;
     wire        alu_src_b, alu_src_a;
     wire        branch, branch_eq, link, jump_reg;
 
@@ -58,7 +62,7 @@ module cpu(
         .jump_reg(jump_reg)
     );
 
-    // â”?â”? Register file â”?â”?
+    // ï¿½?ï¿½? Register file ï¿½?ï¿½?
     wire [31:0] rdata1, rdata2;
     wire [4:0]  waddr;
     wire [31:0] wdata;
@@ -75,7 +79,7 @@ module cpu(
         .rdata2(rdata2)
     );
 
-    // â”?â”? ALU â”?â”?
+    // ï¿½?ï¿½? ALU ï¿½?ï¿½?
     wire [31:0] alu_a, alu_b;
     wire [31:0] alu_r;
     wire        alu_zero, alu_carry, alu_negative, alu_overflow;
@@ -91,32 +95,26 @@ module cpu(
         .overflow(alu_overflow)
     );
 
-    // â”?â”? Immediate extension â”?â”?
+    // ï¿½?ï¿½? Immediate extension ï¿½?ï¿½?
     wire [31:0] imm_ext;
     assign imm_ext = ((op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110))
         ? {16'b0, immediate}
         : {{16{immediate[15]}}, immediate};
 
-    // â”?â”? Data memory â”?â”?
-    reg [31:0] dmem [0:255];
-    wire [31:0] mem_rdata;
-    assign mem_rdata = dmem[alu_r[9:2]];
+    // Data memory interface
+    assign mem_addr = alu_r;
+    assign mem_wdata = rdata2;
 
-    always @(posedge clk_in) begin
-        if (mem_write)
-            dmem[alu_r[9:2]] <= rdata2;
-    end
-
-    // â”?â”? ALU input muxes â”?â”?
+    // ï¿½?ï¿½? ALU input muxes ï¿½?ï¿½?
     assign alu_a = alu_src_a ? {27'b0, shamt} : rdata1;
     assign alu_b = alu_src_b ? imm_ext : rdata2;
 
-    // â”?â”? Writeback muxes â”?â”?
+    // ï¿½?ï¿½? Writeback muxes ï¿½?ï¿½?
     wire [31:0] pc_plus_4 = pc + 32'd4;
     assign waddr = link ? 5'd31 : (is_R_type ? rd : rt);
     assign wdata = link ? pc_plus_4 : (mem_to_reg ? mem_rdata : alu_r);
 
-    // â”?â”? Next PC logic â”?â”?
+    // ï¿½?ï¿½? Next PC logic ï¿½?ï¿½?
     wire [31:0] branch_offset = {{14{immediate[15]}}, immediate, 2'b00};
     wire [31:0] branch_target = pc_plus_4 + branch_offset;
     wire [31:0] jump_target = {pc_plus_4[31:28], index, 2'b00};
