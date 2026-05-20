@@ -37,9 +37,10 @@ module alu(
     wire [31:0] xor_result = a ^ b;
     wire [31:0] nor_result = ~(a | b);
     wire [31:0] lui_result = {b[15:0], 16'b0};
-    wire [32:0] sra_result = $signed({b, 1'b0}) >>> a;
-    wire [32:0] sll_result = {1'b0, b} << a;
-    wire [32:0] srl_result = {b, 1'b0} >> a; 
+    wire [4:0] shift_amt = a[4:0];
+    wire [32:0] sra_result = $signed({b, 1'b0}) >>> shift_amt;
+    wire [32:0] sll_result = {1'b0, b} << shift_amt;
+    wire [32:0] srl_result = {b, 1'b0} >> shift_amt;
           
     wire signed_compare, unsigned_compare;
     assign signed_compare = $signed(a) < $signed(b);

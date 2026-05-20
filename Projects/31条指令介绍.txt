@@ -1,0 +1,406 @@
+7.3 MIPS 31条指令介绍
+无溢出
+无溢出
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 1
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 2
+有溢出
+无溢出
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 3
+有符号比较
+无符号比较
+address = 10000 H
+同济大学电子与信息工程学院
+address = 10000 HMIPS 31条指令介绍 4
+ADD
+格式： ADD rd, rs, rt
+目的: 32位数相加
+描述: rd ← rs + rt
+将通用寄存器中存的32位数据rs与rt相加产生一个32位数据存入目标寄存器rd。
+· 如果发生了溢出，则rd不改变并且产生一个溢出的异常。
+· 如果相加不溢出，则产生的32位数据直接存入目标寄存器rd。
+操作:
+temp ←(GPR[rs]31||GPR[rs]31..0) + (GPR[rt]31||GPR[rt]31..0)
+if temp32 ≠temp31 then
+SignalException(IntegerOverflow)
+else
+GPR[rd] ←temp
+Endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 5
+ADDU
+格式: ADDU rd, rs, rt
+目的: 32位数据相加
+描述: rd ← rs + rt
+将通用寄存器中存的32位数据rs与rt相加产生一个32位数据
+存入目标寄存器rd。
+在任何情况下都不会有溢出的异常。
+操作：
+temp ← GPR[rs] + GPR[rt]
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 6
+ADDI
+格式: ADDI rt, rs, immediate
+目的: 使32位数据与一个立即数相加
+描述: rt ← rs + immediate
+16位有符号立即数与通用寄存器rs中的32位数相加产生一个32位的数存入目标寄存器rt。
+· 如果发生了溢出，则rt不改变并且产生一个溢出的异常。
+· 如果相加不溢出，则结果存入目标寄存器rt。
+操作：
+temp ←(GPR[rs]31||GPR[rs]31..0) + sign_extend(immediate)
+if temp32 ≠ temp31 then
+SignalException(IntegerOverflow)
+else
+GPR[rt] ←temp
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 7
+ADDIU
+格式: ADDIU rt, rs, immediate
+目的: 使32位数据与一个立即数相加
+描述: rt ← rs + immediate
+一个16位有符号的立即数与通用寄存器rs中的32位数相加产生一个32位
+的数存入目标寄存器rt。
+在任何情况下都不会有溢出的异常。
+操作：
+temp ←GPR[rs] + sign_extend(immediate)
+GPR[rt] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 8
+AND
+格式: AND rd, rs, rt
+目的: 按位逻辑与
+描述: rd ← rs AND rt
+将通用寄存器rs和rd中的数据每一位做按位与操作，将结果
+存入目标寄存器rd中。
+操作：
+GPR[rd] ← GPR[rs] and GPR[rt]
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 9
+ANDI
+格式: ANDI rt, rs, immediate
+目的: 与一个常数做按位逻辑与
+描述: rt ← rs AND immediate
+将16位立即数做0扩展后与通用寄存器rs中的32位数据做按
+位与，将结果存入目标寄存器rt。
+操作：
+GPR[rt] ← GPR[rs] and zero_extend(immediate)
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 10
+BEQ
+格式: BEQ rs, rt, offset
+目的: 比较通用寄存器的值，然后做pc相关的分支跳转
+描述: 比较通用寄存器的值，然后做pc相关的分支跳转。
+如果 rs = rt ，那么将offset左移两位，再进行符号扩展到32位与当前pc相加，
+形成有效转移地址，转到该地址。
+如果rs != rt，则继续执行下条指令。
+操作：
+I: target_offset ← sign_extend(offset || 02)
+condition ←(GPR[rs] = GPR[rt])
+I+1: if condition then
+PC ←PC + target_offset
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 11
+BNE
+格式: BNE rs, rt, offset
+目的: 比较通用寄存器的值，然后做pc相关的分支跳转
+描述: 如果 rs != rt ，那么将会跳转到现在pc与偏移量offset（如果是16位需
+扩展到18位）相加后所得的指令。
+如果rs = rt，则继续执行。
+操作：
+I: target_offset ← sign_extend(offset || 02)
+condition ← (GPR[rs] ≠ GPR[rt])
+I+1: if condition then
+PC ← PC + target_offset
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 12
+J
+格式: J target
+目的: 在256MB的范围内跳转
+描述: 该指令无条件跳转到一个绝对地址，instr_index有
+26位，在左移过后访问空间能达到256M。
+操作：
+I:
+I+1: PC ← PCGPRLEN-1..28 || instr_index || 02
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 13
+JAL
+格式: JAL target
+目的: 在256MB范围内执行一个过程调用
+描述: 在跳转到指定地址执行子程序调用的同时，在31号寄
+存器中存放返回地址（当前地址后的第二条指令地址）。
+操作：
+I: GPR[31] ←PC + 8（Mars上执行的是PC+4）
+I+1: PC ←PCGPRLEN-1..28 || instr_index || 02
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 14
+JR
+格式: JR rs
+目的: 使用寄存器的跳转指令
+描述: PC ← rs
+跳转地址存放在通用寄存器rs中，直接跳转到寄存器所存地址。
+操作：
+I: temp ← GPR[rs]
+I+1: if Config1CA = 0 then
+PC ← temp
+else
+PC ← tempGPRLEN-1..1 || 0
+ISAMode ← temp0
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 15
+LUI
+格式: LUI rt, immediate
+目的: 把一个立即数载入到寄存器的高位，低位补0
+描述: rt ← immediate || 016
+将一个16位的立即数载入到通用寄存器rt的高位，低
+16位补0。
+操作：
+GPR[rt] ← immediate || 016
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 16
+LW
+格式: LW rt, offset(base)
+目的: 从内存读取一个字的有符号数据
+描述: rt ← memory[base+offset]
+从内存中基地址加偏移量所得到的准确地址中的内容加载到通用寄存器rt中。
+操作：
+vAddr ← sign_extend(offset) + GPR[base]
+if vAddr1..0 ≠ 02 then
+SignalException(AddressError)
+endif
+(pAddr, CCA) ← AddressTranslation (vAddr, DATA, LOAD)
+memword← LoadMemory (CCA, WORD, pAddr, vAddr, DATA)
+GPR[rt] ← memword
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 17
+NOR
+格式: NOR rd, rs, rt
+目的: 按位逻辑或非
+描述: rd ← rs NOR rt
+将通用寄存器rs和rt中的数据每一位做按位或非操作，将结
+果存入目标寄存器rd中。
+操作：
+GPR[rd] ← GPR[rs] nor GPR[rt]
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 18
+OR
+格式: OR rd, rs, rt
+目的: 按位逻辑或
+描述: rd ← rs or rt
+将通用寄存器rs和rt中的数据每一位做按位或操作，将结果
+存入目标寄存器rd中。
+操作：
+GPR[rd] ← GPR[rs] or GPR[rt]
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 19
+ORI
+格式: ORI rt, rs, immediate
+目的: 和一个常数做按位逻辑或
+描述: rt ← rs or immediate
+将通用寄存器rs和经过0扩展的立即数每一位做按位或操作，
+将结果存入目标寄存器rd中。
+操作：
+GPR[rt] ← GPR[rs] or zero_extend(immediate)
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 20
+SLL
+格式: SLL rd, rt, sa
+目的: 通过数字填充逻辑左移
+描述: rd ← rt << sa
+将通用寄存器rt的内容左移sa位，空余出来的位置用0来填
+充，把结果存入rd寄存器。
+操作：
+s ← sa
+temp ← GPR[rt](31-s)..0 || 0s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 21
+SLLV
+格式: SLLV rd, rt, rs
+目的: 通过数字填充逻辑左移
+描述: rd ← rt << rs
+将通用寄存器rt的内容逻辑左移，左移的位数保存在rs寄存器中，空余
+出来的位置用0来填充，把结果存入rd寄存器。
+操作：
+s ← GPR[rs]4..0
+temp ← GPR[rt](31-s)..0 || 0s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 22
+SLT
+格式: SLT rd, rs, rt
+目的: 通过小于的比较来记录结果
+描述: rd ←(rs < rt)
+比较在rs和rt寄存器中保存的有符号数，用boolean值保存结果到rd寄存器中。
+如果rs小于rt，则结果为1，反之结果为0。算数比较不会引起溢出异常。
+操作：
+if GPR[rs] < GPR[rt] then
+GPR[rd] ← 0GPRLEN-1 || 1
+else
+GPR[rd] ← 0GPRLEN
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 23
+SLTI
+格式: SLTI rt, rs, immediate
+目的: 通过跟立即数小于的比较来记录结果
+描述: rt ←(rs < immediate)
+比较rs中的数和经过符号扩展的16位立即数，用boolean值保存结果到rd寄
+存器中。如果rs中的数小于立即数，则结果为1，反之结果为0。算数比较不
+会引起溢出异常。
+操作：
+if GPR[rs] < sign_extend(immediate) then
+GPR[rd] ← 0GPRLEN-1|| 1
+else
+GPR[rd] ← 0GPRLEN
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 24
+SLTIU
+格式: SLTIU rt, rs, immediate
+目的: 通过跟立即数进行无符号小于的比较来记录结果
+描述: rt ←(rs < immediate)
+把rs中的数和经过符号扩展的16位立即数进行无符号小于比较，用boolean值
+保存结果到rd寄存器中。如果rs小于符号扩展的立即数，则结果为1，反之结果
+为0。算数比较不会引起溢出异常。
+操作：
+if (0 || GPR[rs]) < (0 || sign_extend(immediate)) then
+GPR[rd] ← 0GPRLEN-1 || 1
+else
+GPR[rd] ← 0GPRLEN
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 25
+SLTU
+格式: SLTU rd, rs, rt
+目的: 通过无符号小于的比较来记录结果
+描述: rd ←(rs < rt)
+比较在rs和rt寄存器中保存的无符号数，用boolean值保存结果到rd寄存器中。
+如果rs小于rt，则结果为1，反之结果为0。算数比较不会引起溢出异常。
+操作：
+if (0 || GPR[rs]) < (0 || GPR[rt]) then
+GPR[rd] ← 0GPRLEN-1 || 1
+else
+GPR[rd] ← 0GPRLEN
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 26
+SRA
+格式: SRA rd, rt, sa
+目的: 通过数字填充算术右移
+描述: rd ←rt >> sa (arithmetic)
+将通用寄存器rt中的32位内容右移sa位，高位用rt[31]来填
+充，结果存入通用寄存器rd。
+操作：
+s ← sa
+temp ← (GPR[rt]31)s || GPR[rt]31..s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 27
+SRAV
+格式: SRAV rd, rt, rs
+目的: 通过数字填充算术右移
+描述: rd ←rt >> rs (arithmetic)
+将通用寄存器rt中的32位内容右移，高位用rt[31]来填充，结果存入通
+用寄存器rd。右移的位数由通用寄存器rs中的0-4bit确定。
+操作：
+s ← GPR[rs]4..0
+temp ← (GPR[rt]31)s || GPR[rt]31..s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 28
+SRL
+格式: SRL rd, rt, sa
+目的: 通过数字填充逻辑右移
+描述: rd ←rt >> sa (logical)
+将通用寄存器rt中的32位内容右移sa位，高位用0来填充，结果存入通
+用寄存器rd。
+操作：
+s ← sa
+temp ← 0s || GPR[rt]31..s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 29
+SRLV
+格式: SRLV rd, rt, rs
+目的: 通过数字填充逻辑右移
+描述: rd ←rt >> rs (logical)
+将通用寄存器rt中的32位内容右移，高位用0来填充，结果存入通用寄存
+器rd。右移的位数由通用寄存器rs中的0-4bit确定。
+操作：
+s ← GPR[rs]4..0
+temp ← 0s || GPR[rt]31..s
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 30
+SUB
+格式: SUB rd, rs, rt
+目的: 与32位数相减
+描述: rd ←rs - rt
+将通用寄存器中存的32位数据rs与rt相减产生一个32位数据存入目标寄存器rd。
+· 如果发生了溢出，则rd不改变并且产生一个溢出的异常。
+· 如果不溢出，则产生的32位数据直接存入目标寄存器rd。
+操作：
+temp ← (GPR[rs]31||GPR[rs]31..0) - (GPR[rt]31||GPR[rt]31..0)
+if temp32 ≠ temp31 then
+SignalException(IntegerOverflow)
+else
+GPR[rd] ← temp31..0
+endif
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 31
+SUBU
+格式: SUBU rd, rs, rt
+目的: 32位数据相减
+描述: rd ←rs - rt
+将通用寄存器中存的32位数据rs与rt相减产生一个32位数据存入目标寄
+存器rd。
+在任何情况下都不会有溢出的异常。
+操作：
+temp ← GPR[rs] - GPR[rt]
+GPR[rd] ← temp
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 32
+SW
+格式: SW rt, offset(base)
+目的: 存一个字到内存
+描述: memory[base+offset] ←rt
+将通用寄存器rt中的32位数据存入内存中的有效地址，有效地址由基地址和16位偏移量相
+加所得。
+操作：
+vAddr ← sign_extend(offset) + GPR[base]
+if vAddr1..0 ≠ 02 then
+SignalException(AddressError)
+endif
+(pAddr, CCA) ← AddressTranslation (vAddr, DATA, STORE)
+dataword← GPR[rt]
+StoreMemory (CCA, WORD, dataword, pAddr, vAddr, DATA)
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 33
+XOR
+格式: XOR rd, rs, rt
+目的: 按位逻辑异或
+描述: rd ←rs XOR rt
+将通用寄存器rs和rt中的内容按位进行异或操作，将结果存入rd中。
+操作：
+GPR[rd] ← GPR[rs] xor GPR[rt]
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 34
+XORI
+格式: XORI rt, rs, immediate
+目的: 和一个常数做按位逻辑异或
+描述: rt ←rs XOR immediate
+将通用寄存器rs和经过0扩展的立即数每一位做按位异或操作，将结果存
+入目标寄存器rd中。
+操作：
+GPR[rt] ← GPR[rs] xor zero_extend(immediate)
+同济大学电子与信息工程学院
+MIPS 31条指令介绍 35
+谢谢聆听
+Thank You
