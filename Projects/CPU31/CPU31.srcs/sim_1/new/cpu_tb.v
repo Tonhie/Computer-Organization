@@ -25,14 +25,19 @@ module _246tb_ex9_tb;
 		clk_in = 0;
 		reset = 1;
 		flag = 0;
+
+		// Load instruction memory from hex file
+		#1;
+		$readmemh("../../../imem.hex", _246tb_ex9_tb.uut.rom.inst.ram_data);
+
 		// Wait 100 ns for global reset to finish
-		#50;
+		#49;
         reset = 0;
 		// Add stimulus here
 		//#100;
 		//$fclose(file_output);
 		
-		// ÕâÀïµÄ 10000 Áô×÷°²È«¶µµ×£¬·ÀÖ¹ÍòÒ»Ã»¼ì²âµ½ x µ¼ÖÂ·ÂÕæÎÞÏÞÔËÐÐ
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ 10000 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½×£ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½Ò»Ã»ï¿½ï¿½âµ½ x ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		#10000; 
 		$display("Simulation reached timeout safety limit.");
 		$fclose(file_output);
@@ -43,7 +48,7 @@ module _246tb_ex9_tb;
 		#50;
 		clk_in = ~clk_in;
 		if(clk_in == 1'b1) begin
-			// ¡¾¹Ø¼ü¸Ä¶¯¡¿£ºµ±¸´Î»ÒÑ¾­½áÊø£¬ÇÒ¼ì²âµ½Ö¸ÁîÈ«ÊÇ x Ê±£¬Á¢¿Ì½áÊø·ÂÕæ
+			// ï¿½ï¿½ï¿½Ø¼ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¼ï¿½âµ½Ö¸ï¿½ï¿½È«ï¿½ï¿½ x Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			if (flag) begin
 				$display("Detected all-X instruction (inst === 32'bx). Closing file and finishing simulation...");
 				$fclose(file_output);
@@ -53,7 +58,7 @@ module _246tb_ex9_tb;
 				flag = 1;
 			end
 			
-			// Õý³£¼ÇÂ¼·ÂÕæÊý¾Ý
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			$fdisplay(file_output, "pc: %h", pc);
 			$fdisplay(file_output, "instr: %h", inst);
 			$fdisplay(file_output, "regfile0: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
