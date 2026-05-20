@@ -1,41 +1,5 @@
 `timescale 1ns / 1ps
 
-// Behavioral instruction memory (ROM)
-module imem (
-    input [10:0] a,
-    output [31:0] spo
-);
-    reg [31:0] mem [0:2047];
-
-    initial begin
-        $readmemh("../../../imem.hex", mem);
-    end
-
-    assign spo = mem[a];
-endmodule
-
-// Behavioral data memory (RAM)
-module dmem (
-    input [10:0] a,
-    input [31:0] d,
-    input clk,
-    input we,
-    output [31:0] spo
-);
-    reg [31:0] mem [0:2047];
-
-    initial begin
-        $readmemh("../../../dmem.hex", mem);
-    end
-
-    assign spo = mem[a];
-
-    always @(posedge clk) begin
-        if (we)
-            mem[a] <= d;
-    end
-endmodule
-
 // Top-level datapath
 module sccomp_dataflow(
     input clk_in,
