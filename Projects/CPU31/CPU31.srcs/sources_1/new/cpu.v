@@ -13,7 +13,7 @@ module cpu(
 
     // �?�? PC register �?�?
     wire [31:0] pc_next;
-    pcreg pc_reg (
+    pcreg #(.INIT(32'h00400000)) pc_reg (
         .clk(clk_in),
         .rst(reset),
         .ena(1'b1),

@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 
-module pcreg(
+module pcreg #(
+    parameter INIT = 32'h00000000
+)(
     input clk,
     input rst,
     input ena,
@@ -9,7 +11,7 @@ module pcreg(
     );
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            data_out <= 0;
+            data_out <= INIT;
         end else begin
             if(ena) begin
                 data_out <= data_in;
