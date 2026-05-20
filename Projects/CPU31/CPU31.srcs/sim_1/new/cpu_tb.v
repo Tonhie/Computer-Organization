@@ -5,7 +5,7 @@ module _246tb_ex9_tb;
 	// Inputs
 	reg clk_in;
 	reg reset;
-
+	reg flag;
 	// Outputs
 	wire [31:0] inst;
 	wire [31:0] pc;
@@ -24,18 +24,36 @@ module _246tb_ex9_tb;
 		// Initialize Inputs
 		clk_in = 0;
 		reset = 1;
+		flag = 0;
 		// Wait 100 ns for global reset to finish
 		#50;
         reset = 0;
 		// Add stimulus here
 		//#100;
 		//$fclose(file_output);
+		
+		// 这里的 10000 留作安全兜底，防止万一没检测到 x 导致仿真无限运行
+		#10000; 
+		$display("Simulation reached timeout safety limit.");
+		$fclose(file_output);
+		$finish;
 	end
 
 	always begin
-	#50;
-	clk_in = ~clk_in;
-	if(clk_in == 1'b1) begin
+		#50;
+		clk_in = ~clk_in;
+		if(clk_in == 1'b1) begin
+			// 【关键改动】：当复位已经结束，且检测到指令全是 x 时，立刻结束仿真
+			if (flag) begin
+				$display("Detected all-X instruction (inst === 32'bx). Closing file and finishing simulation...");
+				$fclose(file_output);
+				$finish;
+			end
+			if (reset == 1'b0 && inst === 32'bxxxxxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxx) begin
+				flag = 1;
+			end
+			
+			// 正常记录仿真数据
 			$fdisplay(file_output, "pc: %h", pc);
 			$fdisplay(file_output, "instr: %h", inst);
 			$fdisplay(file_output, "regfile0: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
