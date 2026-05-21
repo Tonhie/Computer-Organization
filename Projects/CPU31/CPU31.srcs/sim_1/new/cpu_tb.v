@@ -18,59 +18,30 @@ module _246tb_ex9_tb;
 	);
 
 	integer file_output;
+	integer test_list;
+	integer test_idx;
+	integer scan_ok;
+	integer cycle_cnt;
+	reg [255:0] base_name;
+	reg [255:0] test_name;
+	reg [511:0] hex_path;
 
-	initial begin
-		file_output = $fopen("_246tb_ex9_result.txt");
-		// Initialize Inputs
-		clk_in = 0;
-		reset = 1;
-		flag = 0;
-
-		// Load instruction memory from hex file
-		#1;
-		$readmemh("../../../imem.hex", _246tb_ex9_tb.uut.rom.inst.ram_data);
-
-		// Wait 100 ns for global reset to finish
-		#49;
-        reset = 0;
-		// Add stimulus here
-		//#100;
-		//$fclose(file_output);
-		
-		// ����� 10000 ������ȫ���ף���ֹ��һû��⵽ x ���·�����������
-		#10000; 
-		$display("Simulation reached timeout safety limit.");
-		$fclose(file_output);
-		$finish;
-	end
-
-	always begin
-		#50;
-		clk_in = ~clk_in;
-		if(clk_in == 1'b1) begin
-			// ���ؼ��Ķ���������λ�Ѿ��������Ҽ�⵽ָ��ȫ�� x ʱ�����̽�������
-			if (flag) begin
-				$display("Detected all-X instruction (inst === 32'bx). Closing file and finishing simulation...");
-				$fclose(file_output);
-				$finish;
-			end
-			if (reset == 1'b0 && inst === 32'bxxxxxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxx) begin
-				flag = 1;
-			end
-			
-			// ������¼��������
+	// ======== task: dump final register state ========
+	task dump_regs;
+		begin
+			$fdisplay(file_output, "[%0s]", test_name);
 			$fdisplay(file_output, "pc: %h", pc);
 			$fdisplay(file_output, "instr: %h", inst);
-			$fdisplay(file_output, "regfile0: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
-			$fdisplay(file_output, "regfile1: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[1]);
-			$fdisplay(file_output, "regfile2: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[2]);
-			$fdisplay(file_output, "regfile3: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[3]);
-			$fdisplay(file_output, "regfile4: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[4]);
-			$fdisplay(file_output, "regfile5: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[5]);
-			$fdisplay(file_output, "regfile6: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[6]);
-			$fdisplay(file_output, "regfile7: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[7]);
-			$fdisplay(file_output, "regfile8: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[8]);
-			$fdisplay(file_output, "regfile9: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[9]);
+			$fdisplay(file_output, "regfile0: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
+			$fdisplay(file_output, "regfile1: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[1]);
+			$fdisplay(file_output, "regfile2: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[2]);
+			$fdisplay(file_output, "regfile3: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[3]);
+			$fdisplay(file_output, "regfile4: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[4]);
+			$fdisplay(file_output, "regfile5: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[5]);
+			$fdisplay(file_output, "regfile6: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[6]);
+			$fdisplay(file_output, "regfile7: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[7]);
+			$fdisplay(file_output, "regfile8: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[8]);
+			$fdisplay(file_output, "regfile9: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[9]);
 			$fdisplay(file_output, "regfile10: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[10]);
 			$fdisplay(file_output, "regfile11: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[11]);
 			$fdisplay(file_output, "regfile12: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[12]);
@@ -94,5 +65,80 @@ module _246tb_ex9_tb;
 			$fdisplay(file_output, "regfile30: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[30]);
 			$fdisplay(file_output, "regfile31: %h", _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[31]);
 		end
+	endtask
+
+	// ======== main test sequence ========
+	initial begin
+		file_output = $fopen("../../../cpu_results.txt");
+		test_list   = $fopen("../../../test_list.txt", "r");
+
+		if (test_list == 0) begin
+			$display("ERROR: Cannot open ../../../test_list.txt");
+			$finish;
+		end
+
+		clk_in = 0;
+		reset = 1;
+		flag = 0;
+		test_idx = 0;
+
+		while (!$feof(test_list)) begin
+			// Read: <basename> <test_name>
+			scan_ok = $fscanf(test_list, "%s %s", base_name, test_name);
+			if (scan_ok < 2) begin
+				// Skip empty / malformed lines
+				$fgets(base_name, test_list);
+			end
+			else begin
+				$display("=== Test %0d: %0s ===", test_idx, test_name);
+
+				// Build hex path: ../../../hex/<basename>.hex
+				hex_path = {"../../../hex/", base_name, ".hex"};
+
+				// Reset CPU
+				reset = 1;
+				flag = 0;
+				#100;
+
+				// Load instruction memory
+				$readmemh(hex_path, _246tb_ex9_tb.uut.rom.inst.ram_data);
+
+				// Release reset
+				#50;
+				reset = 0;
+
+				// Wait for test completion (all-X) or timeout (2000 cycles)
+				cycle_cnt = 0;
+				while (!flag && cycle_cnt < 2000) begin
+					@(negedge clk_in);
+					if (reset == 1'b0 && inst === 32'bx)
+						flag = 1;
+					cycle_cnt = cycle_cnt + 1;
+				end
+
+				if (cycle_cnt >= 2000)
+					$display("  WARNING: timeout (2000 cycles)");
+				else
+					$display("  Done after %0d cycles", cycle_cnt);
+
+				// Dump final register state
+				dump_regs;
+
+				test_idx = test_idx + 1;
+				#100;
+			end
+		end
+
+		$fclose(test_list);
+		$fclose(file_output);
+		$display("=== All %0d tests completed ===", test_idx);
+		$finish;
 	end
+
+	// ======== clock generator ========
+	always begin
+		#50;
+		clk_in = ~clk_in;
+	end
+
 endmodule
