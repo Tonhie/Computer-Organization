@@ -239,8 +239,8 @@ regfile24: 00000000
 regfile25: 00000000
 regfile26: 00000000
 regfile27: 00000000
-regfile28: 00000000
-regfile29: 00000000
+regfile28: 00008000
+regfile29: 00001004
 regfile30: 00000000
 regfile31: 00000000
 [_2_lwsw]
@@ -414,8 +414,8 @@ regfile24: 00000000
 regfile25: 0000ffff
 regfile26: 0000ffff
 regfile27: ffffffff
-regfile28: 0000ffff
-regfile29: ffffffff
+regfile28: 1000ffff
+regfile29: 7fffdff7
 regfile30: 0000ffff
 regfile31: ffffffff
 [_2_sll]
@@ -904,8 +904,8 @@ regfile24: 00000000
 regfile25: 0000ffff
 regfile26: 0000ffff
 regfile27: ffffffff
-regfile28: 0000ffff
-regfile29: ffffffff
+regfile28: 10007fff
+regfile29: 7fffcff3
 regfile30: 0000ffff
 regfile31: ffffffff
 [_3.5_beq]
@@ -1079,7 +1079,7 @@ regfile24: 00000000
 regfile25: 00000000
 regfile26: 00000000
 regfile27: 00000000
-regfile28: 00000000
-regfile29: 00000000
+regfile28: 10008000
+regfile29: 7fffeffc
 regfile30: 00000000
 regfile31: 00000000
