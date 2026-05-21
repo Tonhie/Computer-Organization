@@ -97,7 +97,8 @@ module cpu(
 
     // �?�? Immediate extension �?�?
     wire [31:0] imm_ext;
-    wire        is_logic_i = (op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110);
+    wire        is_logic_i;
+    assign is_logic_i = (op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110);
     assign imm_ext = is_logic_i ? {16'b0, immediate} : {{16{immediate[15]}}, immediate};
 
     // Data memory interface

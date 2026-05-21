@@ -23,12 +23,9 @@ module _246tb_ex9_tb;
 	integer scan_ok;
 	integer cycle_cnt;
 	integer i;
-	integer hex_lines;
 	reg [255:0] base_name;
 	reg [255:0] test_name;
 	reg [511:0] hex_path;
-	reg [31:0]  hex_val;
-	integer      hex_fd;
 
 	// ======== task: dump final register state ========
 	task dump_regs;
@@ -99,22 +96,12 @@ module _246tb_ex9_tb;
 				// Build hex path: ../../../hex/<basename>.hex
 				hex_path = {"../../../hex/", base_name, ".hex"};
 
-				// Count lines in hex file
-				hex_lines = 0;
-				hex_fd = $fopen(hex_path, "r");
-				if (hex_fd != 0) begin
-					while (!$feof(hex_fd)) begin
-						scan_ok = $fscanf(hex_fd, "%h", hex_val);
-						if (scan_ok == 1)
-							hex_lines = hex_lines + 1;
-					end
-					$fclose(hex_fd);
-				end
-				$display("  Program size: %0d instructions", hex_lines);
-
-				// Clear entire instruction memory to NOPs (0x00000000)
-				for (i = 0; i < 2048; i = i + 1) begin
-					_246tb_ex9_tb.uut.rom.inst.ram_data[i] = 32'h00000000;
+				// Clear instruction memory to X BEFORE loading new test.
+				// This prevents cross-test contamination: entries beyond
+				// the hex file remain X, so inst===32'bx stops the test.
+				// 256 entries is enough for the largest test (~150 instructions).
+				for (i = 0; i < 256; i = i + 1) begin
+					_246tb_ex9_tb.uut.rom.inst.ram_data[i] = {32{1'bx}};
 				end
 
 				// Reset CPU
@@ -125,18 +112,23 @@ module _246tb_ex9_tb;
 				// Load instruction memory
 				$readmemh(hex_path, _246tb_ex9_tb.uut.rom.inst.ram_data);
 
-				// Release reset 10ns before posedge (avoid race condition)
-				#40;
+				// Release reset
+				#50;
 				reset = 0;
 
-				// Run for hex_lines + 2 cycles (extra NOPs are harmless)
+				// Wait for test completion (all-X) or timeout (2000 cycles)
 				cycle_cnt = 0;
-				while (cycle_cnt < hex_lines + 2) begin
+				while (!flag && cycle_cnt < 2000) begin
 					@(negedge clk_in);
+					if (reset == 1'b0 && inst === 32'bx)
+						flag = 1;
 					cycle_cnt = cycle_cnt + 1;
 				end
 
-				$display("  Done after %0d cycles", cycle_cnt);
+				if (cycle_cnt >= 2000)
+					$display("  WARNING: timeout (2000 cycles)");
+				else
+					$display("  Done after %0d cycles", cycle_cnt);
 
 				// Dump final register state
 				dump_regs;
