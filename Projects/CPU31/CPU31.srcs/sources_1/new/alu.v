@@ -48,33 +48,37 @@ module alu(
     
     always @(*) begin
         casex(aluc)
-            4'b0000: {carry, r} = add_result;
+            4'b0000: begin {carry, r} = add_result; zero = (r == 32'b0); negative = r[31]; overflow = 1'b0; end
             4'b0010: begin
                 r = add_result[31:0];
                 overflow = (r[31] ^ a[31]) & (r[31] ^ b[31]);
                 zero = (r == 32'b0);
                 negative = r[31];
             end
-            4'b0001: {carry, r} = sub_result;
+            4'b0001: begin {carry, r} = sub_result; zero = (r == 32'b0); negative = r[31]; overflow = 1'b0; end
             4'b0011: begin
                 r = sub_result[31:0];
+                carry = sub_result[32];
                 overflow = (r[31] ^ a[31]) & (r[31] ^ ~b[31]);
+                zero = (sub_result[31:0] == 32'b0);
+                negative = r[31];
             end
-            4'b0100: r = and_result;
-            4'b0101: r = or_result;
-            4'b0110: r = xor_result;
-            4'b0111: r = nor_result;
-            4'b100x: r = lui_result;
-            4'b1011: r = {31'b0, signed_compare};
+            4'b0100: begin r = and_result; carry = 1'b0; zero = (r == 32'b0); negative = r[31]; end
+            4'b0101: begin r = or_result;  carry = 1'b0; zero = (r == 32'b0); negative = r[31]; end
+            4'b0110: begin r = xor_result; carry = 1'b0; zero = (r == 32'b0); negative = r[31]; end
+            4'b0111: begin r = nor_result; carry = 1'b0; zero = (r == 32'b0); negative = r[31]; end
+            4'b100x: begin r = lui_result; carry = 1'b0; zero = (r == 32'b0); negative = r[31]; end
+            4'b1011: begin r = {31'b0, signed_compare}; carry = 1'b0; zero = (sub_result[32:0] == 33'b0); negative = signed_compare; end
             4'b1010: begin
                 r = {31'b0, unsigned_compare};
                 carry = sub_result[32];
+                zero = (sub_result[32:0] == 33'b0);
+                negative = unsigned_compare;
             end
-            4'b1100: {r, carry} = sra_result;
-            4'b111x: {carry, r} = sll_result;
-            4'b1101: {r, carry} = srl_result;
+            4'b1100: begin {r, carry} = sra_result; zero = (r == 32'b0); negative = r[31]; end
+            4'b111x: begin {carry, r} = sll_result; zero = (r == 32'b0); negative = r[31]; end
+            4'b1101: begin {r, carry} = srl_result; zero = (r == 32'b0); negative = r[31]; end
+            default: begin r = 32'b0; carry = 1'b0; zero = 1'b0; negative = 1'b0; overflow = 1'b0; end
         endcase
-        zero = (aluc == 4'b1011 || aluc == 4'b1010) ? (sub_result[32:0] == 33'b0) : (r == 32'b0);
-        negative = (aluc == 4'b1011) ? signed_compare : r[31];
     end
 endmodule
