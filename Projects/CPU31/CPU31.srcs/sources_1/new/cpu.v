@@ -62,6 +62,26 @@ module cpu(
         .jump_reg(jump_reg)
     );
 
+    // �?�? ALU �?�?
+    wire [31:0] alu_a, alu_b;
+    wire [31:0] alu_r;
+    wire        alu_zero, alu_carry, alu_negative, alu_overflow;
+
+    alu cpu_alu (
+        .a(alu_a),
+        .b(alu_b),
+        .aluc(aluc),
+        .r(alu_r),
+        .zero(alu_zero),
+        .carry(alu_carry),
+        .negative(alu_negative),
+        .overflow(alu_overflow)
+    );
+
+    // Suppress register write on signed overflow (MARS behavior)
+    wire effective_reg_write;
+    assign effective_reg_write = reg_write & ~(is_signed & alu_overflow);
+
     // �?�? Register file �?�?
     wire [31:0] rdata1, rdata2;
     wire [4:0]  waddr;
@@ -79,22 +99,6 @@ module cpu(
         .rdata2(rdata2)
     );
 
-    // �?�? ALU �?�?
-    wire [31:0] alu_a, alu_b;
-    wire [31:0] alu_r;
-    wire        alu_zero, alu_carry, alu_negative, alu_overflow;
-
-    alu cpu_alu (
-        .a(alu_a),
-        .b(alu_b),
-        .aluc(aluc),
-        .r(alu_r),
-        .zero(alu_zero),
-        .carry(alu_carry),
-        .negative(alu_negative),
-        .overflow(alu_overflow)
-    );
-
     // �?�? Immediate extension �?�?
     wire [31:0] imm_ext;
     wire        is_logic_i;
@@ -108,9 +112,6 @@ module cpu(
     // �?�? ALU input muxes �?�?
     assign alu_a = alu_src_a ? {27'b0, shamt} : rdata1;
     assign alu_b = alu_src_b ? imm_ext : rdata2;
-
-    // �?�? Suppress register write on signed overflow (MARS behavior) �?�?
-    wire effective_reg_write = reg_write & ~(is_signed & alu_overflow);
 
     // �?�? Writeback muxes �?�?
     wire [31:0] pc_plus_4 = pc + 32'd4;
