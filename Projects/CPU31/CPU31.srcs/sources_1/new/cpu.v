@@ -70,7 +70,7 @@ module cpu(
     regfiles cpu_ref (
         .clk(clk_in),
         .rst(reset),
-        .we(reg_write),
+        .we(effective_reg_write),
         .raddr1(rs),
         .raddr2(rt),
         .waddr(waddr),
@@ -97,9 +97,8 @@ module cpu(
 
     // �?�? Immediate extension �?�?
     wire [31:0] imm_ext;
-    assign imm_ext = ((op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110))
-        ? {16'b0, immediate}
-        : {{16{immediate[15]}}, immediate};
+    wire        is_logic_i = (op == 6'b001100) || (op == 6'b001101) || (op == 6'b001110);
+    assign imm_ext = is_logic_i ? {16'b0, immediate} : {{16{immediate[15]}}, immediate};
 
     // Data memory interface
     assign mem_addr = alu_r;
@@ -108,6 +107,9 @@ module cpu(
     // �?�? ALU input muxes �?�?
     assign alu_a = alu_src_a ? {27'b0, shamt} : rdata1;
     assign alu_b = alu_src_b ? imm_ext : rdata2;
+
+    // �?�? Suppress register write on signed overflow (MARS behavior) �?�?
+    wire effective_reg_write = reg_write & ~(is_signed & alu_overflow);
 
     // �?�? Writeback muxes �?�?
     wire [31:0] pc_plus_4 = pc + 32'd4;

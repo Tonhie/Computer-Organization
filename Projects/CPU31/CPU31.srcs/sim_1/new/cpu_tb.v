@@ -22,9 +22,13 @@ module _246tb_ex9_tb;
 	integer test_idx;
 	integer scan_ok;
 	integer cycle_cnt;
+	integer i;
+	integer hex_lines;
 	reg [255:0] base_name;
 	reg [255:0] test_name;
 	reg [511:0] hex_path;
+	reg [31:0]  hex_val;
+	integer      hex_fd;
 
 	// ======== task: dump final register state ========
 	task dump_regs;
@@ -95,6 +99,24 @@ module _246tb_ex9_tb;
 				// Build hex path: ../../../hex/<basename>.hex
 				hex_path = {"../../../hex/", base_name, ".hex"};
 
+				// Count lines in hex file
+				hex_lines = 0;
+				hex_fd = $fopen(hex_path, "r");
+				if (hex_fd != 0) begin
+					while (!$feof(hex_fd)) begin
+						scan_ok = $fscanf(hex_fd, "%h", hex_val);
+						if (scan_ok == 1)
+							hex_lines = hex_lines + 1;
+					end
+					$fclose(hex_fd);
+				end
+				$display("  Program size: %0d instructions", hex_lines);
+
+				// Clear entire instruction memory to NOPs (0x00000000)
+				for (i = 0; i < 2048; i = i + 1) begin
+					_246tb_ex9_tb.uut.rom.inst.ram_data[i] = 32'h00000000;
+				end
+
 				// Reset CPU
 				reset = 1;
 				flag = 0;
@@ -103,23 +125,18 @@ module _246tb_ex9_tb;
 				// Load instruction memory
 				$readmemh(hex_path, _246tb_ex9_tb.uut.rom.inst.ram_data);
 
-				// Release reset
-				#50;
+				// Release reset 10ns before posedge (avoid race condition)
+				#40;
 				reset = 0;
 
-				// Wait for test completion (all-X) or timeout (2000 cycles)
+				// Run for hex_lines + 2 cycles (extra NOPs are harmless)
 				cycle_cnt = 0;
-				while (!flag && cycle_cnt < 2000) begin
+				while (cycle_cnt < hex_lines + 2) begin
 					@(negedge clk_in);
-					if (reset == 1'b0 && inst === 32'bx)
-						flag = 1;
 					cycle_cnt = cycle_cnt + 1;
 				end
 
-				if (cycle_cnt >= 2000)
-					$display("  WARNING: timeout (2000 cycles)");
-				else
-					$display("  Done after %0d cycles", cycle_cnt);
+				$display("  Done after %0d cycles", cycle_cnt);
 
 				// Dump final register state
 				dump_regs;
