@@ -14,7 +14,7 @@ module sccomp_dataflow(
     cpu sccpu(
         .clk_in(clk_in),
         .reset(reset),
-        .inst(inst),
+        .instr(inst),
         .pc(pc),
         .mem_addr(mem_addr),
         .mem_wdata(mem_wdata),
@@ -22,8 +22,11 @@ module sccomp_dataflow(
         .mem_rdata(mem_rdata)
     );
 
+    wire [31:0] imem_addr;
+    assign imem_addr = pc - 32'h00400000;
+
     imem rom (
-        .a(pc[12:2]),
+        .a(imem_addr[12:2]),
         .spo(inst)
     );
 

@@ -188,7 +188,7 @@ module decoder (
             // lw
             6'b100011: begin
                 is_I_type = 1;
-                aluc = 4'b0000;
+                aluc = 4'b0010;
                 alu_src_b = 1;
                 reg_write = 1;
                 mem_to_reg = 1;
@@ -196,7 +196,7 @@ module decoder (
             // sw
             6'b101011: begin
                 is_I_type = 1;
-                aluc = 4'b0000;
+                aluc = 4'b0010;
                 alu_src_b = 1;
                 mem_write = 1;
             end

@@ -4,7 +4,7 @@ module cpu(
     input clk_in,
     input reset,
     output [31:0] pc,
-    input [31:0] inst,
+    input [31:0] instr,
     output [31:0] mem_addr,
     output [31:0] mem_wdata,
     output mem_write,
@@ -36,7 +36,7 @@ module cpu(
     wire        branch, branch_eq, link, jump_reg;
 
     decoder cpu_decoder (
-        .inst(inst),
+        .inst(instr),
         .is_R_type(is_R_type),
         .is_I_type(is_I_type),
         .is_J_type(is_J_type),
@@ -78,11 +78,7 @@ module cpu(
         .overflow(alu_overflow)
     );
 
-    // Suppress register write on signed overflow (MARS behavior)
-    wire effective_reg_write;
-    assign effective_reg_write = reg_write & ~(is_signed & alu_overflow);
-
-    // �?�? Register file �?�?
+    //�?�? Register file �?�?
     wire [31:0] rdata1, rdata2;
     wire [4:0]  waddr;
     wire [31:0] wdata;
@@ -90,7 +86,7 @@ module cpu(
     regfiles cpu_ref (
         .clk(clk_in),
         .rst(reset),
-        .we(effective_reg_write),
+        .we(reg_write),
         .raddr1(rs),
         .raddr2(rt),
         .waddr(waddr),
