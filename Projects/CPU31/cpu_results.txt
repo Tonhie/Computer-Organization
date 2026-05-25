@@ -125,19 +125,19 @@ regfile15: 8000000b
 regfile16: 8000000c
 regfile17: 8000000d
 regfile18: 8000000e
-regfile19: f0000000
-regfile20: ffff8000
-regfile21: 80000000
-regfile22: ffffffff
-regfile23: fffffff0
-regfile24: 8fff0000
-regfile25: 9fff0000
-regfile26: efff0000
-regfile27: 8f300000
-regfile28: 801c0000
-regfile29: 801d0000
-regfile30: 801e0000
-regfile31: 801f0000
+regfile19: 70000000
+regfile20: 7fff8000
+regfile21: 00000000
+regfile22: 7fffffff
+regfile23: 7ffffff0
+regfile24: 0fff0000
+regfile25: 1fff0000
+regfile26: 6fff0000
+regfile27: 0f300000
+regfile28: 001c0000
+regfile29: 001d0000
+regfile30: 001e0000
+regfile31: 001f0000
 [_2_addu]
 pc: 00400254
 instr: xxxxxxxx
@@ -555,7 +555,7 @@ regfile25: 00000001
 regfile26: 00000000
 regfile27: 00000001
 regfile28: 00000000
-regfile29: 00000000
+regfile29: 00000001
 regfile30: 00000001
 regfile31: 00000000
 [_2_sltiu]
