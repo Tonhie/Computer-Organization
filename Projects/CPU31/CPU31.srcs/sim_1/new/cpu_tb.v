@@ -135,6 +135,12 @@ module _246tb_ex9_tb;
 				else
 					$display("  Done after %0d cycles", cycle_cnt);
 
+				// Flush cycle: capture last instruction writeback
+				#100;
+				if (reset == 1'b0)
+					dump_regs;
+
+
 				test_idx = test_idx + 1;
 				#100;
 			end
