@@ -29,3 +29,5 @@ bne _3.5_bne
 j _3_j
 jal _3_jal
 jr _4_jr
+test01 _5_test01
+test02 _5_test02
