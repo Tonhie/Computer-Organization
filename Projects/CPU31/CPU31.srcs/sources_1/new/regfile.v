@@ -9,9 +9,6 @@ module pcreg #(
     input [31:0] data_in,
     output reg [31:0] data_out
     );
-    initial begin
-        data_out = INIT;
-    end
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             data_out <= INIT;
@@ -41,24 +38,6 @@ module regfiles(
         for (i = 0; i < 32; i = i + 1) begin : reg_gen
             if (i == 0) begin
                 assign array_reg[0] = 32'h0;
-            end else if (i == 28) begin
-                // $gp — MARS initializes this to 0x10008000
-                pcreg #(.INIT(32'h10008000)) reg_inst (
-                    .clk(clk),
-                    .rst(rst),
-                    .ena(we && (waddr == i)),
-                    .data_in(wdata),
-                    .data_out(array_reg[i])
-                );
-            end else if (i == 29) begin
-                // $sp — MARS initializes this to 0x7fffeffc
-                pcreg #(.INIT(32'h7fffeffc)) reg_inst (
-                    .clk(clk),
-                    .rst(rst),
-                    .ena(we && (waddr == i)),
-                    .data_in(wdata),
-                    .data_out(array_reg[i])
-                );
             end else begin
                 pcreg reg_inst (
                     .clk(clk),
