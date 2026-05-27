@@ -38,7 +38,7 @@ module alu(
     wire signed_compare, unsigned_compare;
     assign signed_compare   = $signed(a) < $signed(b);
     assign unsigned_compare = a < b;
-    assign zero = (r == 0);
+    assign zero = ((a - b) == 0);
 
     always @(*) begin
         carry    = 1'b0;

@@ -8,7 +8,6 @@ module cpu(
     output [31:0] mem_addr,
     output [31:0] mem_wdata,
     output mem_write,
-    output mem_read,
     input [31:0] mem_rdata
 );
 
@@ -105,16 +104,9 @@ module cpu(
     // Data memory interface
     assign mem_addr = alu_r;
     assign mem_wdata = rdata2;
-    assign mem_read = mem_to_reg;
-
-    // Variable shift instructions use only rs[4:0] per MIPS spec
-    wire is_sllv = is_R_type && (func == 6'b000100);
-    wire is_srlv = is_R_type && (func == 6'b000110);
-    wire is_srav = is_R_type && (func == 6'b000111);
-    wire is_shift_var = is_sllv || is_srlv || is_srav;
 
     // �?�? ALU input muxes �?�?
-    assign alu_a = alu_src_a ? {27'b0, shamt} : (is_shift_var ? {27'b0, rdata1[4:0]} : rdata1);
+    assign alu_a = alu_src_a ? {27'b0, shamt} : rdata1;
     assign alu_b = alu_src_b ? imm_ext : rdata2;
 
     // �?�? Writeback muxes �?�?
