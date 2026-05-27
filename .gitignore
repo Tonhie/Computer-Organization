@@ -94,3 +94,8 @@
 !*.pdf
 !*.zip
 !*.hex
+!*.txt
+!*.py
+!*.java
+!*.class
+!*.sh
