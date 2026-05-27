@@ -2,8 +2,9 @@
 """
 Compare Vivado CPU simulation results against MARS golden reference.
 
-Matches snapshots by PC address to handle MARS stopping early on overflow.
-Only compares register state at PCs that exist in both traces.
+Uses final register value comparison. When MARS terminated early
+(e.g. overflow, bad address — detected by fewer snapshots), restricts
+CPU trace to only PCs that also exist in MARS.
 
 Usage:
   python3 compare_results.py           # compare all tests
@@ -20,11 +21,37 @@ CPU_RESULT   = os.path.join(PROJECT, "cpu_results.txt")
 MARS_RESULTS = os.path.join(TEST_DIR, "mars_results")
 
 
-def parse_cpu_sections(path):
+def count_pcs(content):
+    """Count pc: lines in content."""
+    return sum(1 for line in content.splitlines() if line.startswith("pc:"))
+
+
+def parse_regs(content, allowed_pcs=None):
+    """
+    Parse register values from trace content.
+    If allowed_pcs is given, only use snapshots whose PC is in the set.
+    Returns last value for each register.
+    """
+    regs = {}
+    current_pc = None
+    for line in content.splitlines():
+        line = line.strip()
+        if line.startswith("pc:"):
+            current_pc = line.split(":")[1].strip()
+            continue
+        if allowed_pcs is not None and current_pc is not None and current_pc not in allowed_pcs:
+            continue
+        m = re.match(r"regfile(\d+):\s*([0-9a-fA-Fx]+)", line)
+        if m:
+            regs[int(m.group(1))] = m.group(2).lower().replace("0x", "").zfill(8)
+    return regs
+
+
+def parse_cpu_sections(path, mars_snap_counts):
     """
     Parse cpu_results.txt with [test_name] sections.
-    Returns dict: {test_name: {last_regs_dict}}.
-    Takes the LAST value for each register across all snapshots.
+    Returns dict: {test_name: {reg_dict}}.
+    When CPU has significantly more snapshots than MARS, restrict to MARS-common PCs.
     """
     tests = {}
     with open(path) as f:
@@ -34,9 +61,27 @@ def parse_cpu_sections(path):
     for i in range(1, len(sections), 2):
         name = sections[i].strip()
         body = sections[i + 1] if i + 1 < len(sections) else ""
-        regs = {}
-        for m in re.finditer(r"regfile(\d+):\s*([0-9a-fA-Fx]+)", body):
-            regs[int(m.group(1))] = m.group(2).lower().replace("0x", "").zfill(8)
+
+        mars_count = mars_snap_counts.get(name, 0)
+        cpu_count = count_pcs(body)
+
+        # If MARS stopped much earlier than CPU (overflow, exception),
+        # restrict CPU to MARS-common PCs
+        if mars_count > 0 and cpu_count > mars_count + 2:
+            mars_pcs = set()
+            mars_file = os.path.join(MARS_RESULTS, f"{name}.txt")
+            if os.path.exists(mars_file):
+                with open(mars_file) as mf:
+                    for line in mf:
+                        line = line.strip()
+                        if line.startswith("pc:"):
+                            mars_pcs.add(line.split(":")[1].strip())
+                regs = parse_regs(body, mars_pcs)
+            else:
+                regs = parse_regs(body)
+        else:
+            regs = parse_regs(body)
+
         if regs:
             tests[name] = regs
     return tests
@@ -44,14 +89,9 @@ def parse_cpu_sections(path):
 
 def parse_mars_file(path):
     """Parse a MARS result file. Returns dict {reg_num: hex_string} of LAST values."""
-    regs = {}
     with open(path) as f:
-        for line in f:
-            line = line.strip()
-            m = re.match(r"regfile(\d+):\s*([0-9a-fA-Fx]+)", line)
-            if m:
-                regs[int(m.group(1))] = m.group(2).lower().replace("0x", "").zfill(8)
-    return regs
+        content = f.read()
+    return parse_regs(content)
 
 
 def compare_test(name, cpu_regs, mars_regs):
@@ -71,14 +111,19 @@ def main():
         print("Run Vivado simulation first, then re-run this script.")
         sys.exit(1)
 
-    cpu_tests = parse_cpu_sections(CPU_RESULT)
-    print(f"Loaded {len(cpu_tests)} CPU test results from {CPU_RESULT}")
-
+    # Count MARS snapshots per test
+    mars_snap_counts = {}
     mars_tests = {}
     for f in sorted(glob.glob(os.path.join(MARS_RESULTS, "*.txt"))):
         name = os.path.splitext(os.path.basename(f))[0]
-        mars_tests[name] = parse_mars_file(f)
+        with open(f) as mf:
+            mars_content = mf.read()
+        mars_snap_counts[name] = count_pcs(mars_content)
+        mars_tests[name] = parse_regs(mars_content)
     print(f"Loaded {len(mars_tests)} MARS results from {MARS_RESULTS}")
+
+    cpu_tests = parse_cpu_sections(CPU_RESULT, mars_snap_counts)
+    print(f"Loaded {len(cpu_tests)} CPU test results from {CPU_RESULT}")
 
     if len(sys.argv) >= 2:
         target = sys.argv[1]
