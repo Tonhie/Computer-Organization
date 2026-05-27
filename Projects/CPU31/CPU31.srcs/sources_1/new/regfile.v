@@ -9,6 +9,9 @@ module pcreg #(
     input [31:0] data_in,
     output reg [31:0] data_out
     );
+    initial begin
+        data_out = INIT;
+    end
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             data_out <= INIT;

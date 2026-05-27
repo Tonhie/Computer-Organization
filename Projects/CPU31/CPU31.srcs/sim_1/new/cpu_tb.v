@@ -70,7 +70,7 @@ module _246tb_ex9_tb;
 	// ======== main test sequence ========
 	initial begin
 		file_output = $fopen("../../../cpu_results.txt");
-		test_list   = $fopen("../../../test_list.txt", "r");
+		test_list   = $fopen("../../../tests/test_list.txt", "r");
 
 		if (test_list == 0) begin
 			$display("ERROR: Cannot open ../../../test_list.txt");
@@ -92,8 +92,8 @@ module _246tb_ex9_tb;
 			else begin
 				$display("=== Test %0d: %0s ===", test_idx, test_name);
 
-				// Build hex path: ../../../hex/<basename>.hex
-				hex_path = {"../../../hex/", base_name, ".hex"};
+				// Build hex path: ../../../tests/hex/<basename>.hex
+				hex_path = {"../../../tests/hex/", base_name, ".hex"};
 
 				// Clear instruction memory to X BEFORE loading new test.
 				// This prevents cross-test contamination: entries beyond

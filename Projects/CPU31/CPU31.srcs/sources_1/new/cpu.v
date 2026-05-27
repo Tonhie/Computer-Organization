@@ -82,11 +82,14 @@ module cpu(
     wire [31:0] rdata1, rdata2;
     wire [4:0]  waddr;
     wire [31:0] wdata;
+    wire        effective_reg_write;
+    assign effective_reg_write = reg_write & ~(is_signed & alu_overflow);
+
 
     regfiles cpu_ref (
         .clk(clk_in),
         .rst(reset),
-        .we(reg_write),
+        .we(effective_reg_write),
         .raddr1(rs),
         .raddr2(rt),
         .waddr(waddr),
