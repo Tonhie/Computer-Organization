@@ -3,13 +3,13 @@
 CPU31 test runner — compares Vivado simulation against MARS (golden reference).
 
 Usage:
-  python3 test_runner.py ../asm/_1_addi.txt --prepare
-  python3 test_runner.py ../asm/_1_addi.txt --check
+  python3 test_runner.py ../asm/_2_add.txt --prepare
+  python3 test_runner.py ../asm/_2_add.txt --check
   python3 test_runner.py --batch-prepare
   python3 test_runner.py --batch-check
 """
 
-import subprocess, sys, os, re, glob
+import subprocess, sys, os, re, glob, shutil
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DIR   = os.path.dirname(SCRIPT_DIR)
@@ -21,33 +21,14 @@ DMEM      = os.path.join(PROJECT, "dmem.hex")
 RESULT    = os.path.join(PROJECT, "CPU31.sim", "sim_1", "behav", "xsim", "_246tb_ex9_result.txt")
 ASM_DIR   = os.path.join(TEST_DIR, "asm")
 EXP_DIR   = os.path.join(TEST_DIR, "expected")
-
-
-def mars_regs(asm_path):
-    """Run MARS on an asm file, return dict {reg_num: hex_string} of final regs."""
-    reg_args = " ".join(f"${i}" for i in range(32))
-    cmd = ["java", "-jar", MARS, "nc", "b", "hex", "50000", reg_args, asm_path]
-    out = subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT)
-    regs = {}
-    for line in out.strip().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split()
-        if len(parts) >= 2:
-            try:
-                reg_str = parts[0].replace("$", "")
-                reg_num = int(reg_str)
-                val = parts[1].replace("0x", "").replace("_", "")
-                regs[reg_num] = val.lower().zfill(8)
-            except (ValueError, IndexError):
-                continue
-    return regs
+MARS_TXT  = os.path.join(PROJECT, "result.txt")
 
 
 def mars_assemble(asm_path):
     """Assemble asm -> COE-format imem.hex. Returns True on success."""
     tmp = os.path.join(TEST_DIR, "_temp_dump.hex")
+    if os.path.exists(tmp):
+        os.remove(tmp)
     cmd = ["java", "-jar", MARS, "nc", "a", "dump", ".text", "HexText", tmp, asm_path]
     subprocess.run(cmd, check=True, capture_output=True, text=True)
 
@@ -80,8 +61,26 @@ def mars_assemble(asm_path):
     return True
 
 
+def mars_regs_from_trace(trace_path):
+    """
+    Parse MARS result.txt trace, return dict {reg_num: hex_string} of LAST reg values.
+    """
+    regs = {}
+    if not os.path.exists(trace_path):
+        return regs
+    with open(trace_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            m = re.match(r"regfile(\d+):\s*([0-9a-fA-Fx]+)", line)
+            if m:
+                regs[int(m.group(1))] = m.group(2).lower().replace("0x", "").zfill(8)
+    return regs
+
+
 def vivado_regs(result_path):
-    """Parse Vivado result file, extract last register state."""
+    """Parse Vivado result file, extract LAST register state."""
     regs = {}
     if not os.path.exists(result_path):
         return None
@@ -140,13 +139,30 @@ def cmd_prepare(asm_path):
         return False
 
     print(f"  Running MARS simulation...")
+    if os.path.exists(MARS_TXT):
+        os.remove(MARS_TXT)
+    cmd = ["java", "-jar", MARS, "nc", "0", asm_path]
     try:
-        regs = mars_regs(asm_path)
-    except subprocess.CalledProcessError as e:
-        print(f"  MARS simulation error:\n{e.stdout}\n{e.stderr}")
+        subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT, timeout=120)
+    except subprocess.TimeoutExpired:
+        print(f"  MARS simulation timeout")
+        return False
+
+    if not os.path.exists(MARS_TXT):
+        print(f"  MARS simulation: no result.txt produced")
+        return False
+
+    regs = mars_regs_from_trace(MARS_TXT)
+    if not regs:
+        print(f"  Could not parse result.txt")
         return False
 
     save_expected(name, regs)
+    # Also copy to mars_results for compare_results.py
+    mars_results_dir = os.path.join(TEST_DIR, "mars_results")
+    os.makedirs(mars_results_dir, exist_ok=True)
+    shutil.copy(MARS_TXT, os.path.join(mars_results_dir, f"{name}.txt"))
+
     print(f"  Saved {len(regs)} registers to tests/expected/{name}.mars")
     print(f"  Ready. Now run Vivado simulation, then: python3 test_runner.py {asm_path} --check")
     return True

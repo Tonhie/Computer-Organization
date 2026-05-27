@@ -18,7 +18,7 @@ for txt in "$ASM_DIR"/*.txt; do
     base=$(echo "$filename" | sed 's/^_[0-9.]*_//')
 
     echo "Converting $filename -> $base.hex"
-    java -jar "$MARS_JAR" "$txt" nc a dump .text HexText "$HEX_DIR/$base.hex"
+    java -jar "$MARS_JAR" nc a dump .text HexText "$HEX_DIR/$base.hex" "$txt"
 done
 
 echo "Done. $(ls "$HEX_DIR"/*.hex 2>/dev/null | wc -l) hex files generated in $HEX_DIR"
