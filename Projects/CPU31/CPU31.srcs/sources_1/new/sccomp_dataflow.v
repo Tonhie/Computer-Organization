@@ -8,7 +8,7 @@ module sccomp_dataflow(
     output [31:0] pc
 );
     wire [31:0] mem_addr, mem_wdata;
-    wire mem_write;
+    wire mem_write, mem_read;
     wire [31:0] mem_rdata;
 
     cpu sccpu(
@@ -19,6 +19,7 @@ module sccomp_dataflow(
         .mem_addr(mem_addr),
         .mem_wdata(mem_wdata),
         .mem_write(mem_write),
+        .mem_read(mem_read),
         .mem_rdata(mem_rdata)
     );
 

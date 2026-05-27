@@ -203,14 +203,14 @@ module decoder (
             // beq
             6'b000100: begin
                 is_I_type = 1;
-                aluc = 4'b0011;
+                aluc = 4'b0001;
                 branch = 1;
                 branch_eq = 1;
             end
             // bne
             6'b000101: begin
                 is_I_type = 1;
-                aluc = 4'b0011;
+                aluc = 4'b0001;
                 branch = 1;
                 branch_eq = 0;
             end

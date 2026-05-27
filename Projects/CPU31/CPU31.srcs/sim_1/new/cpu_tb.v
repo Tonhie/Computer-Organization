@@ -27,10 +27,9 @@ module _246tb_ex9_tb;
 	reg [255:0] test_name;
 	reg [511:0] hex_path;
 
-	// ======== task: dump final register state ========
+	// ======== task: dump register state (per-instruction) ========
 	task dump_regs;
 		begin
-			$fdisplay(file_output, "[%0s]", test_name);
 			$fdisplay(file_output, "pc: %h", pc);
 			$fdisplay(file_output, "instr: %h", inst);
 			$fdisplay(file_output, "regfile0: %h",  _246tb_ex9_tb.uut.sccpu.cpu_ref.array_reg[0]);
@@ -116,12 +115,18 @@ module _246tb_ex9_tb;
 				#50;
 				reset = 0;
 
+				// Write section header for this test
+				$fdisplay(file_output, "[%0s]", test_name);
+
 				// Wait for test completion (all-X) or timeout (2000 cycles)
+				// Dump register state after each instruction
 				cycle_cnt = 0;
 				while (!flag && cycle_cnt < 2000) begin
 					@(negedge clk_in);
 					if (reset == 1'b0 && inst === 32'bx)
 						flag = 1;
+					else if (reset == 1'b0)
+						dump_regs;
 					cycle_cnt = cycle_cnt + 1;
 				end
 
@@ -129,9 +134,6 @@ module _246tb_ex9_tb;
 					$display("  WARNING: timeout (2000 cycles)");
 				else
 					$display("  Done after %0d cycles", cycle_cnt);
-
-				// Dump final register state
-				dump_regs;
 
 				test_idx = test_idx + 1;
 				#100;
